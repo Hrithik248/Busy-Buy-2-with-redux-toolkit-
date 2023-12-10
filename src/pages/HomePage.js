@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import {collection, getDocs} from 'firebase/firestore';
 import Spinner from 'react-spinner-material';
 import style from '../styles/HomePage.module.css';
 import spinnerStyle from '../styles/Spinner.module.css';
-import { db } from '../config/firebaseInit';
-//import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/ProductCard';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectProductsList, fetchProducts, productsstate, selectProductsLoadingState } from '../redux/slices/productsSlice';
 export default function HomePage(){
@@ -17,7 +15,6 @@ export default function HomePage(){
     const [selectedCategory,setSelectedCategory]=useState([]);
     //state for saving list of products available
     const prodList=useSelector(selectProductsList);
-    console.log(prodList);
     //state for keep filtered products according to filter states
     const [searchAndFilterResult,setSearchAndFilterResults]=useState([]);
     //loading state for showing spinner
@@ -27,22 +24,10 @@ export default function HomePage(){
         if(prodList.length===0){
             dispatch(fetchProducts());
         }
-        /*async function fetchProducts(){
-            const querySnapshot= await getDocs(collection(db,'products'));
-            const fetchedList=querySnapshot.docs.map((prod)=>{
-                return {id:prod.id,...prod.data()};
-            })
-            //list of all products available
-            setProdList(fetchedList);
-            //products shown on the screen which will be all the products on mount
-            setSearchAndFilterResults(fetchedList);
-            //disable the spinner
-            setLoading(false);
-        }
-        fetchProducts();*/
     },[]);
     //filtering the product based on search field and fliters applied
     useEffect(()=>{
+        if(prodList.length>0){
         let filteredList=prodList;
         //if search feild is not empty then filter the products according to that
         if(searchField!==''){
@@ -53,12 +38,12 @@ export default function HomePage(){
         //if some category is selected from filter
         if(selectedCategory.length!==0){
             filteredList=filteredList.filter((prod)=>selectedCategory.includes(prod.category));
-            console.log(filteredList);
         }
         //filter based on price slider
         filteredList=filteredList.filter((prod)=>prod.price<=priceRange);
         setSearchAndFilterResults(filteredList);
-    },[searchField,priceRange,selectedCategory]);
+        }
+    },[prodList,searchField,priceRange,selectedCategory]);
     //setting selected category array state on selecting any category checkbox
     function handleCheckCategory(category){
         const index=selectedCategory.findIndex((cat)=>cat===category);
@@ -69,7 +54,6 @@ export default function HomePage(){
         else{
             newSelectedCategory.splice(index,1);
         }
-        console.log(newSelectedCategory);
         setSelectedCategory(newSelectedCategory);
     }
     return (
@@ -110,7 +94,7 @@ export default function HomePage(){
                 <div className={style.prodList} >
                     {
                         searchAndFilterResult.map((prod,ind)=>(
-                            {/*<ProductCard product={prod} key={ind} />*/}
+                            <ProductCard id={prod.id} key={ind} />
                         ))
                     }
                 </div>

@@ -2,22 +2,28 @@
 import { useNavigate } from 'react-router-dom';
 import style from '../styles/ProductCard.module.css';
 import IncDecBtn from './IncDecBtn';
+import { useDispatch, useSelector } from 'react-redux';
+import { authSelector } from '../redux/slices/userAuthSlice';
+import { cartEntitiesSelector, handleAddToCart } from '../redux/slices/cartSlice';
+import {  selectProductById } from '../redux/slices/productsSlice';
 
 // Functional component for rendering individual product cards
-export default function ProductCard(props) {
+export default function ProductCard({id}) {
     // Destructuring values from custom hooks and component props
-    return (<>puo</>);
-    const { user } = useAuth();
-    const { handleAddToCart, cart } = useCartAndOrders();
-    const { product } = props;
-
+    const { user } = useSelector(authSelector);
+    //console.log(user);
+    const dispatch=useDispatch();
+    const cart  = useSelector(cartEntitiesSelector);
+    //console.log(cart,useSelector(cartSelector));
+    const product =useSelector(selectProductById(id));
+    //console.log('rpodu ',product);
     // Extracting quantity information from the cart for the current product
-    const { qty } = cart.find((prod) => prod.id === product.id) || { qty: null };
-
+    const qty = cart && cart[id] ? cart[id].qty : null;
+    //console.log(user,cart,product,qty);
     // Accessing the navigation function from react-router-dom
     const navigate = useNavigate();
-
     return (
+        product&&
         <div className={style.cardCon}>
             {/* Displaying the product image */}
             <img className={style.prodImage} src={product.image} alt={product.name} />
@@ -37,7 +43,7 @@ export default function ProductCard(props) {
                 //navigate user to sign in page if user not logged in else add the item to cart
                 <button
                     className={style.addBtn}
-                    onClick={() => (user ? handleAddToCart(product) : navigate('/sign_in'))}
+                    onClick={() => (user ? dispatch(handleAddToCart({id})) : navigate('/sign_in'))}
                 >
                     Add to Cart
                 </button>

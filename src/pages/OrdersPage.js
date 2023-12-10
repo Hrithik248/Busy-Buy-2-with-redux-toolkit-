@@ -1,27 +1,28 @@
+import { useDispatch, useSelector } from 'react-redux';
 import style from '../styles/OrdersPage.module.css';
-import { useCartAndOrders } from '../contexts/OrdersAndCartContext';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/authContextProvider';
+import { fetchOrdersThunk, ordersLoadingSelector, ordersSelector } from '../redux/slices/ordersSlice';
 import { useEffect } from 'react';
+import Spinner from 'react-spinner-material';
+import spinnerStyle from '../styles/Spinner.module.css';
+import { selectProductEntities } from '../redux/slices/productsSlice';
 export default function OrdersPage(){
-    //getting user status from auth context
-    const {user}=useAuth();
-    const navigate=useNavigate();
-    //navigating user back to home page if user is not logged in
-    useEffect(()=>{
-        if(!user){
-            navigate('/');
-        }
-    },[user])
     //getting order details from cart and orders context
-    const {orders}=useCartAndOrders();
+    const ordersEntities=useSelector(ordersSelector);
+    const orders=Object.values(ordersEntities);
+    const products=useSelector(selectProductEntities);
+    const isLoading=useSelector(ordersLoadingSelector);
+    const dispatch=useDispatch();
+    useEffect(()=>{
+        dispatch(fetchOrdersThunk());
+    },[])
     return (
-        orders.length===0?<h2>You have not ordered anything yet !</h2>:
+        isLoading?<Spinner radius={200} stroke={5} className={spinnerStyle.spinner} color={'#2874f0'} visible={isLoading} />:
+        (orders.length===0?<h2>You have not ordered anything yet !</h2>:
         <div className={style.ordersCon} >
             <h2>Your Orders</h2>
             {orders.map((order,ind)=>(
                 <div className={style.order} key={ind} >
-                    <h3>Ordered On: {order.timestamp.toDate().getDate()}-{order.timestamp.toDate().getMonth()+1}-{order.timestamp.toDate().getFullYear()}</h3>
+                    <h3>Ordered On: {order.timestamp}</h3>
                     <table className={style.orderTable} >
                         <thead>
                             <tr>
@@ -33,25 +34,25 @@ export default function OrdersPage(){
                         </thead>
                         <tbody>
                             {
-                                order.data.map((item,ind)=>(
+                                order.order.map((item,ind)=>(
                                     <tr key={ind}>
-                                        <td>{item.name}</td>
-                                        <td>{item.price}</td>
+                                        <td>{products[item.id].name}</td>
+                                        <td>{products[item.id].price}</td>
                                         <td>{item.qty}</td>
-                                        <td>{item.price*item.qty}</td>
+                                        <td>{products[item.id].price*item.qty}</td>
                                     </tr>
                                 ))
                             }
                             <tr>
                                 <td colSpan="3">Total</td>
                                 <td>
-                                {order.data.reduce((total, item) => total + item.price * item.qty, 0)}
+                                {order.order.reduce((total, item) => total + products[item.id].price * item.qty, 0)}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             ))}
-        </div>
+        </div>)
     )
 }

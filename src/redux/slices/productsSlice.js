@@ -7,10 +7,11 @@ const productsAdapter=createEntityAdapter({
     selectId: (product) => product.id
 })
 export const fetchProducts=createAsyncThunk('products/fetchProducts',async(args,thunkAPI)=>{
-    return getDocs(collection(db,'products'));
+    const querySnapshot = await getDocs(collection(db, 'products'));
+    const serializedData = querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    return serializedData; 
 })
 //products slice selector
-console.log(productsAdapter.getInitialState());
 const selectProducts = (state) => state.productsReducer;
 const productsSlice=createSlice({
     name:'products',
@@ -21,8 +22,7 @@ const productsSlice=createSlice({
             state.isLoading=true;
         })
         .addCase(fetchProducts.fulfilled,(state,action)=>{
-            const fetchedProducts=action.payload.docs.map((doc)=>({...doc.data(),id:doc.id}));
-            productsAdapter.setAll(state,fetchedProducts);
+            productsAdapter.setAll(state,action.payload);
             state.isLoading=false;
         })
         .addCase(fetchProducts.rejected,(state,action)=>{
@@ -31,6 +31,10 @@ const productsSlice=createSlice({
         })
     }
 })
+export const selectProductEntities=createSelector(
+    [selectProducts],
+    (products)=>products.entities
+)
 // Create a selector for the products list
 export const selectProductsList = createSelector(
     [selectProducts],
@@ -47,5 +51,5 @@ export const selectProductById = (productId) => createSelector(
     [selectProducts],
     (products) => products.entities[productId]||null
 );
-export const productsstate=(state)=>state;
+//export const productsstate=(state)=>state;
 export const productsReducer=productsSlice.reducer;

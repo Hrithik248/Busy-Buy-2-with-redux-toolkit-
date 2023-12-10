@@ -1,21 +1,11 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import style from '../styles/SignInSignUp.module.css';
-import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { authSelector } from "../redux/slices/userAuthSlice";
+import { Link } from "react-router-dom";
+import { handleSignIn } from "../redux/slices/userAuthSlice";
 export default function SignIn(){
-    const navigate=useNavigate();
     //states for recording user sign in details
     const [email,setEmail]=useState('');
     const [password,setPassword]=useState('');
-    //getting sign in hanlder and user status from auth Context
-    const {handleSignIn,user}=useSelector(authSelector);
-    //navigating user back to home page if user if already logged in
-    useEffect(()=>{
-        if(user){
-            navigate('/');
-        }
-    },[user])
     return(
         <form className={style.formCon} onSubmit={(e)=>{e.preventDefault();handleSignIn(email,password)}} >
             <h2>Sign In</h2>
