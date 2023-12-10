@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 // Importing CSS styles for the entire application
 import './App.css';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';

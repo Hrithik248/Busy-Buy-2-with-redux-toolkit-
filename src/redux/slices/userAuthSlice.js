@@ -54,7 +54,7 @@ export const handleSignIn = async (email, password) => {
     });
   } catch (error) {
     // Display error toast and log error message on sign in failure
-    toast.error("Something went wrong!", {
+    toast.error("Invalid email/password !", {
       position: toast.POSITION.TOP_RIGHT
     });
     console.log('error in signing in', error);
@@ -95,7 +95,7 @@ export const handleSignUp = async (name, email, password) => {
     });
   } catch (error) {
     // Display error toast and log error message on sign up failure
-    toast.error("Something went wrong!", {
+    toast.error("Invalid email/password !", {
       position: toast.POSITION.TOP_RIGHT
     });
     console.log('error in creating user', error);

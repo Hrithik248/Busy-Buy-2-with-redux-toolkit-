@@ -15,7 +15,7 @@ export default function SignUp() {
             {/* Input for user email */}
             <input className={style.email} type="text" placeholder="Enter your Email" value={email} onChange={(e) => setEmail(e.target.value)} />
             {/* Input for user password */}
-            <input className={style.password} type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input className={style.password} type="password" minLength={6} required placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
             {/* Button to submit the form and trigger sign-up */}
             <button className={style.logInBtn}>Sign up</button>
         </form>
