@@ -5,12 +5,12 @@ import style from '../styles/Navbar.module.css';
 import spinnerStyle from '../styles/Spinner.module.css';
 import { useNavigate, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { authSelector,handleSignOut } from "../redux/slices/userAuthSlice";
+import { authSelector, handleSignOut } from "../redux/slices/userAuthSlice";
 
 // Functional component for rendering the navigation bar
 export default function Navbar() {
     // Destructuring values from the authentication context
-    const {user,isLoading} = useSelector(authSelector);
+    const { user, isLoading } = useSelector(authSelector);
 
     // Accessing the navigation function from react-router-dom
     const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function Navbar() {
                                 <span className={style.btnText}>Home</span>
                             </NavLink>
 
-                            {/* My Orders button, visible only when user is logged in */}
+                            {/* My Orders button, visible only when the user is logged in */}
                             {user && (
                                 <NavLink className={style.ordersBtn} to='/orders'>
                                     <img className={style.icon} src='https://cdn-icons-png.flaticon.com/128/1632/1632670.png' alt="Orders Icon" />
@@ -46,7 +46,7 @@ export default function Navbar() {
                                 </NavLink>
                             )}
 
-                            {/* Cart button, visible only when user is logged in */}
+                            {/* Cart button, visible only when the user is logged in */}
                             {user && (
                                 <NavLink className={style.cartBtn} to='/cart'>
                                     <img className={style.icon} src='https://cdn-icons-png.flaticon.com/128/4290/4290854.png' alt="Cart Icon" />

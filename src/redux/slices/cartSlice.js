@@ -1,159 +1,233 @@
-import { createAsyncThunk, createEntityAdapter, createSlice } from "@reduxjs/toolkit";
-import { getDocs, collection, doc, updateDoc, increment, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../config/firebaseInit"; 
-import { addOrderThunk, fetchOrdersThunk } from "./ordersSlice";
-const cartAdapter=createEntityAdapter();
-
-export const fetchCartItems=createAsyncThunk('cart/fetchCartItems',async(args,thunkAPI)=>{
-    const currentUser=thunkAPI.getState().userAuthReducer.user;
-    const allCartsRef = collection(db, 'usersCarts');
-    const currentUserRef = doc(allCartsRef, currentUser);
-    const cartRef = collection(currentUserRef, 'myCart');
-    const unserializedData=await getDocs(cartRef);
-    const serializedData=unserializedData.docs.map((doc)=>({id:doc.id,...doc.data()}));
-    return serializedData;
-})
-export const handleAddToCart = createAsyncThunk('cart/handleAddToCart', async (args, thunkAPI) => {
-    console.log('hand ad toc',args)
-    const currentUser=thunkAPI.getState().userAuthReducer.user;
-    console.log(currentUser);
-    const allCartsRef = collection(db, 'usersCarts');
-    const currentUserRef = doc(allCartsRef, currentUser);
-    const cartRef = collection(currentUserRef, 'myCart');
+import {
+    createAsyncThunk,
+    createEntityAdapter,
+    createSlice,
+  } from "@reduxjs/toolkit";
+  import {
+    getDocs,
+    collection,
+    doc,
+    updateDoc,
+    increment,
+    setDoc,
+    deleteDoc,
+  } from "firebase/firestore";
+  import { toast } from "react-toastify";
+  import { db } from "../../config/firebaseInit";
+  import { addOrderThunk, fetchOrdersThunk } from "./ordersSlice";
   
-    // Get current cart items using the selector
-    const cart = thunkAPI.getState().cartReducer.entities;  
-    // Check if the item with the given ID already exists in the cart
-    const itemInCart = cart[args.id];
+  // Creating an entity adapter for managing cart items
+  const cartAdapter = createEntityAdapter();
   
-    // If item is already in cart, increase the quantity by 1
-    if (itemInCart) {
-        console.log('item in cart')
-      const itemRef = doc(cartRef, args.id);
-      const updatedItem = await updateDoc(itemRef, {
-        qty: increment(1)
-      });
-    } else {
-      // If the item is not in the cart, add the item with qty 1
-      console.log('item not in cart');
-      const itemRef = doc(cartRef, args.id);
-      const addedItem = await setDoc(itemRef, { qty: 1 });
+  // Async thunk to fetch cart items from Firebase
+  export const fetchCartItems = createAsyncThunk(
+    "cart/fetchCartItems",
+    async (args, thunkAPI) => {
+      // Fetching the current user from the Redux state
+      const currentUser = thunkAPI.getState().userAuthReducer.user;
+  
+      // Firebase references
+      const allCartsRef = collection(db, "usersCarts");
+      const currentUserRef = doc(allCartsRef, currentUser);
+      const cartRef = collection(currentUserRef, "myCart");
+  
+      // Fetching cart items and serializing the data
+      const unserializedData = await getDocs(cartRef);
+      const serializedData = unserializedData.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  
+      return serializedData;
     }
-    return args.id;
-  });
-  export const handleRemoveFromCart = createAsyncThunk('cart/handleRemoveFromCart', async (args, thunkAPI) => {
-    const currentUser=thunkAPI.getState().userAuthReducer.user;
-    const allCartsRef = collection(db, 'usersCarts');
-    const currentUserRef = doc(allCartsRef, currentUser);
-    const cartRef = collection(currentUserRef, 'myCart');
-    const cart = thunkAPI.getState().cartReducer.entities;    
-    const itemInCart = cart[args.id];
-    const itemRef = doc(cartRef, args.id);
-    const currentQty = itemInCart.qty;
-    if (currentQty > 1) {
-        // If the quantity is greater than 1, decrease the quantity
-        const updatedItem = await updateDoc(itemRef, {
-          qty: increment(-1)
+  );
+  
+  // Async thunk to handle adding an item to the cart
+  export const handleAddToCart = createAsyncThunk(
+    "cart/handleAddToCart",
+    async (args, thunkAPI) => {
+      // Fetching the current user from the Redux state
+      const currentUser = thunkAPI.getState().userAuthReducer.user;
+  
+      // Firebase references
+      const allCartsRef = collection(db, "usersCarts");
+      const currentUserRef = doc(allCartsRef, currentUser);
+      const cartRef = collection(currentUserRef, "myCart");
+  
+      // Fetching the current cart items using the selector
+      const cart = thunkAPI.getState().cartReducer.entities;
+  
+      // Checking if the item with the given ID already exists in the cart
+      const itemInCart = cart[args.id];
+  
+      // Handling the addition of the item to the cart
+      if (itemInCart) {
+        const itemRef = doc(cartRef, args.id);
+        await updateDoc(itemRef, {
+          qty: increment(1),
         });
-    } else {
-        // If the quantity is 1, delete the document
-        await deleteDoc(itemRef);
+      } else {
+        const itemRef = doc(cartRef, args.id);
+        await setDoc(itemRef, { qty: 1 });
+      }
+  
+      return args.id;
     }
-    return args.id;
-});
-export const clearCart=createAsyncThunk('cart/clearCart',async(args,thunkAPI)=>{
-    const currentUser=thunkAPI.getState().userAuthReducer.user;
-    const cartItems = thunkAPI.getState().cartReducer.entities;    
-    const allCartsRef = collection(db, 'usersCarts');
+  );
+  
+  // Async thunk to handle removing an item from the cart
+  export const handleRemoveFromCart = createAsyncThunk(
+    "cart/handleRemoveFromCart",
+    async (args, thunkAPI) => {
+      // Fetching the current user from the Redux state
+      const currentUser = thunkAPI.getState().userAuthReducer.user;
+  
+      // Firebase references
+      const allCartsRef = collection(db, "usersCarts");
+      const currentUserRef = doc(allCartsRef, currentUser);
+      const cartRef = collection(currentUserRef, "myCart");
+  
+      // Fetching the current cart items using the selector
+      const cart = thunkAPI.getState().cartReducer.entities;
+  
+      // Fetching the item to be removed
+      const itemInCart = cart[args.id];
+      const itemRef = doc(cartRef, args.id);
+      const currentQty = itemInCart.qty;
+  
+      // Handling the removal of the item from the cart
+      if (currentQty > 1) {
+        await updateDoc(itemRef, {
+          qty: increment(-1),
+        });
+      } else {
+        await deleteDoc(itemRef);
+      }
+  
+      return args.id;
+    }
+  );
+  
+  // Async thunk to clear the entire cart
+  export const clearCart = createAsyncThunk("cart/clearCart", async (args, thunkAPI) => {
+    // Fetching the current user from the Redux state
+    const currentUser = thunkAPI.getState().userAuthReducer.user;
+  
+    // Fetching the current cart items using the selector
+    const cartItems = thunkAPI.getState().cartReducer.entities;
+  
+    // Firebase references
+    const allCartsRef = collection(db, "usersCarts");
     const currentUserRef = doc(allCartsRef, currentUser);
-    const cartRef = collection(currentUserRef, 'myCart');
+    const cartRef = collection(currentUserRef, "myCart");
+  
+    // Iterating through each cart item and deleting them
     for (const itemId in cartItems) {
-        const itemRef = doc(cartRef, itemId);
-        await deleteDoc(itemRef);
+      const itemRef = doc(cartRef, itemId);
+      await deleteDoc(itemRef);
     }
-})
-const cartSlice=createSlice({
-    name:'cart',
-    initialState:{
-        ...cartAdapter.getInitialState(),
-        isLoading:true,
-        placingOrder:false
+  });
+  
+  // Creating a slice for managing the cart state
+  const cartSlice = createSlice({
+    name: "cart",
+    initialState: {
+      ...cartAdapter.getInitialState(),
+      isLoading: true,
+      placingOrder: false,
     },
-    reducers:{
-        clearCartState:(state,action)=>{
-            cartAdapter.removeAll(state);
-        }
+    reducers: {
+      // Custom reducer to clear the entire cart state
+      clearCartState: (state, action) => {
+        cartAdapter.removeAll(state);
+      },
     },
-    extraReducers:(builder)=>{
-        builder.addCase(fetchCartItems.fulfilled,(state,action)=>{
-            cartAdapter.setAll(state,action.payload);
-            state.isLoading=false;
+    extraReducers: (builder) => {
+      // Handling async actions with extraReducers
+      builder
+        .addCase(fetchCartItems.fulfilled, (state, action) => {
+          cartAdapter.setAll(state, action.payload);
+          state.isLoading = false;
         })
-        .addCase(fetchCartItems.pending,(state,action)=>{
-            state.isLoading=true;
+        .addCase(fetchCartItems.pending, (state, action) => {
+          state.isLoading = true;
         })
-        .addCase(fetchCartItems.rejected,(state,action)=>{
-            state.isLoading=false;
-            console.log('error in fetching cart items',action.payload);
+        .addCase(fetchCartItems.rejected, (state, action) => {
+          state.isLoading = false;
+          toast.error("Something went wrong !", {
+            position: toast.POSITION.TOP_RIGHT
+          });
+          console.log("error in fetching cart items");
         })
-        .addCase(handleAddToCart.fulfilled,(state,action)=>{
-            console.log('case hac', action.payload);
-            const id = action.payload;
-            console.log(state);
-            const existingItem = state.entities[id];
-
-            if (existingItem) {
+        .addCase(handleAddToCart.fulfilled, (state, action) => {
+          const id = action.payload;
+          const existingItem = state.entities[id];
+  
+          if (existingItem) {
             // If the item exists in the cart, increase its quantity
-                cartAdapter.updateOne(state, {
-                    id: existingItem.id,
-                    changes: { qty: existingItem.qty + 1 },
-                });
-            } else {
-                // If the item is not in the cart, add it with quantity 1
-                cartAdapter.addOne(state, { id, qty: 1 });
-            }
-        })
-        .addCase(handleAddToCart.rejected,(state,action)=>{
-            console.log('error in adding item to cart', action.payload);
-        })
-        .addCase(handleRemoveFromCart.fulfilled,(state,action)=>{
-            const id= action.payload;
-            const existingItem = state.entities[id];
-            console.log(existingItem,id);
-            if (existingItem.qty>1) {
-                cartAdapter.updateOne(state, {
-                id,
-                changes: { qty: existingItem.qty - 1 },
+            cartAdapter.updateOne(state, {
+              id: existingItem.id,
+              changes: { qty: existingItem.qty + 1 },
             });
-            } else {
-                cartAdapter.removeOne(state,id);
-            }
+          } else {
+            // If the item is not in the cart, add it with quantity 1
+            cartAdapter.addOne(state, { id, qty: 1 });
+          }
         })
-        .addCase(handleRemoveFromCart.rejected,(state,action)=>{
-            console.log('error in removeing item from cart');
+        .addCase(handleAddToCart.rejected, (state, action) => {
+            toast.error("Something went wrong !", {
+                position: toast.POSITION.TOP_RIGHT
+            });
+          console.log("error in adding item to cart");
         })
-        .addCase(clearCart.pending,(state,action)=>{
-            state.isLoading=true;
+        .addCase(handleRemoveFromCart.fulfilled, (state, action) => {
+          const id = action.payload;
+          const existingItem = state.entities[id];
+  
+          if (existingItem.qty > 1) {
+            // If the quantity is greater than 1, decrease the quantity
+            cartAdapter.updateOne(state, {
+              id,
+              changes: { qty: existingItem.qty - 1 },
+            });
+          } else {
+            // If the quantity is 1, remove the item from the cart
+            cartAdapter.removeOne(state, id);
+          }
         })
-        .addCase(clearCart.fulfilled,(state,action)=>{
-            cartAdapter.removeAll(state);
-            state.isLoading=false;
+        .addCase(handleRemoveFromCart.rejected, (state, action) => {
+            toast.error("Something went wrong !", {
+                position: toast.POSITION.TOP_RIGHT
+            });
+          console.log("error in removing item from cart");
         })
-        .addCase(clearCart.rejected,(state,action)=>{
-            state.isLoading=false;
-            console.log('unable to clear cart',action.payload);
+        .addCase(clearCart.pending, (state, action) => {
+          state.isLoading = true;
         })
-        .addCase(addOrderThunk.pending,(state,action)=>{
-            state.placingOrder=true;
+        .addCase(clearCart.fulfilled, (state, action) => {
+          cartAdapter.removeAll(state);
+          state.isLoading = false;
         })
-        .addCase(fetchOrdersThunk.fulfilled,(state,action)=>{
-            state.placingOrder=false;
+        .addCase(clearCart.rejected, (state, action) => {
+          state.isLoading = false;
+          toast.error("Something went wrong !", {
+            position: toast.POSITION.TOP_RIGHT
+        });
+          console.log("unable to clear cart");
         })
-    }
-})
-
-export const cartReducer=cartSlice.reducer;
-export const cartEntitiesSelector=(state)=>state.cartReducer.entities;
-export const cartLoadingSelector=(state)=>state.cartReducer.isLoading;
-export const placingOrderSelector=(state)=>state.cartReducer.placingOrder;
-export const {clearCartState}=cartSlice.actions;
+        .addCase(addOrderThunk.pending, (state, action) => {
+          state.placingOrder = true;
+        })
+        .addCase(fetchOrdersThunk.fulfilled, (state, action) => {
+          state.placingOrder = false;
+        });
+    },
+  });
+  
+  // Exporting the cart reducer and selectors
+  export const cartReducer = cartSlice.reducer;
+  export const cartEntitiesSelector = (state) => state.cartReducer.entities;
+  export const cartLoadingSelector = (state) => state.cartReducer.isLoading;
+  export const placingOrderSelector = (state) => state.cartReducer.placingOrder;
+  export const { clearCartState } = cartSlice.actions;
+  
